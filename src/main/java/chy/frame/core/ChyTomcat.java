@@ -14,27 +14,27 @@ import javax.servlet.Servlet;
 
 public class ChyTomcat {
 
-    //Ä¬ÈÏ¶Ë¿Ú8080
+    //é»˜è®¤ç«¯å£8080
     private int port = 8080;
 
-    //Ö¸¶¨web.xmlµÄÎ»ÖÃ
+    //æŒ‡å®šweb.xmlçš„ä½ç½®
     private String webxmlpath;
 
     private Tomcat tomcat;
 
     private StandardContext context;
-    //¾²Ì¬×ÊÔ´ÎÄ¼şµÄcontext Èç¹ûÃ»ÓĞÉèÖÃ assetpath ÔòºÍÉÏÃæcontext ÏàÍ¬
+    //é™æ€èµ„æºæ–‡ä»¶çš„context å¦‚æœæ²¡æœ‰è®¾ç½® assetpath åˆ™å’Œä¸Šé¢context ç›¸åŒ
     private StandardContext assetContext;
-    //ĞéÄâÄ¿Â¼
+    //è™šæ‹Ÿç›®å½•
     private String contextPath = "/";
 
-    //ÏîÄ¿¹ÒÔØÄ¿Â¼,¸Ä±äÂ·¾¶½«»áÓ°Ïì¾²Ì¬×ÊÔ´µÄ·ÃÎÊÎ»ÖÃ
+    //é¡¹ç›®æŒ‚è½½ç›®å½•,æ”¹å˜è·¯å¾„å°†ä¼šå½±å“é™æ€èµ„æºçš„è®¿é—®ä½ç½®
     private String contextDir = null;
 
     private String projectPath = System.getProperty("user.dir");
 
     /**
-     * ¹¹Ôì 2¸ö²ÎÊı¶¼¿ÉÒÔÄ¬ÈÏÎªnull;
+     * æ„é€  2ä¸ªå‚æ•°éƒ½å¯ä»¥é»˜è®¤ä¸ºnull;
      * @param webxmlpath
      * @param assetpath
      */
@@ -54,13 +54,13 @@ public class ChyTomcat {
         }
 
 
-        //³õÊ¼»¯tomcat
+        //åˆå§‹åŒ–tomcat
         init();
     }
 
 
     /**
-     * Â·¾¶´¦Àí,Èç¹ûÊÇclasspath:xxx ¿ªÍ·¾Í·ÅÔÚÀàÂ·¾¶ÏÂÃæ
+     * è·¯å¾„å¤„ç†,å¦‚æœæ˜¯classpath:xxx å¼€å¤´å°±æ”¾åœ¨ç±»è·¯å¾„ä¸‹é¢
      * @return
      */
     private String pathHanlde(String path){
@@ -69,9 +69,30 @@ public class ChyTomcat {
         }
 
         boolean isclasspath = path.startsWith("classpath:");
-        if(!isclasspath){
+        if(isclasspath){
+           return  classPathHandle(path);
+        }
+
+        boolean isprojectpath = path.startsWith("projectpath:");
+        if(isprojectpath){
+            return  projectPathHandle(path);
+        }
+        return path;
+    }
+
+
+
+    public String classPathHandle(String path){
+        String[] split = path.split(":");
+        if(split.length != 2){
             return path;
         }
+        String classesPath=Thread.currentThread().getContextClassLoader().getResource("").getPath();
+        String result = classesPath + "/" + split[1];
+        return result;
+    }
+
+    public String projectPathHandle(String path){
         String[] split = path.split(":");
         if(split.length != 2){
             return path;
@@ -80,49 +101,51 @@ public class ChyTomcat {
         return result;
     }
 
+
+
     private void init(){
         tomcat = new Tomcat();
         //Server server = tomcat.getServer();
 
-        //¿´Ô´Âë·¢ÏÖ,ËûÖ»ÄÜÉèÖÃÒ»¸öservice,Ö±½ÓÄÃÄ¬ÈÏµÄ
+        //çœ‹æºç å‘ç°,ä»–åªèƒ½è®¾ç½®ä¸€ä¸ªservice,ç›´æ¥æ‹¿é»˜è®¤çš„
         Service service = tomcat.getService();
 
-        //´´½¨Á¬½ÓÆ÷,²¢ÇÒÌí¼Ó¶ÔÓ¦µÄÁ¬½ÓÆ÷,Í¬Ê±Á¬½ÓÆ÷Ö¸¶¨¶Ë¿Ú
+        //åˆ›å»ºè¿æ¥å™¨,å¹¶ä¸”æ·»åŠ å¯¹åº”çš„è¿æ¥å™¨,åŒæ—¶è¿æ¥å™¨æŒ‡å®šç«¯å£
         Connector connector = new Connector();
         connector.setPort(port);
         service.addConnector(connector);
 
-        //´´½¨Ò»¸öÒıÇæ,·ÅÈëserviceÖĞ
+        //åˆ›å»ºä¸€ä¸ªå¼•æ“,æ”¾å…¥serviceä¸­
         Engine engine = new StandardEngine();
         service.setContainer(engine);
         engine.setDefaultHost("localhost");
         engine.setName("myTomcat");
 
-        //Ìí¼Óhost
+        //æ·»åŠ host
         Host host = new StandardHost();
         engine.addChild(host);
         host.setName("localhost");
         host.setAppBase("webapps");
 
-        System.out.println("µ±Ç°ÏîÄ¿Â·¾¶ : "+contextDir);
-        //ÔÚ¶ÔÓ¦µÄhostÏÂÃæ´´½¨Ò»¸ö context ²¢ÖÆ¶¨ËûµÄ¹¤×÷Â·¾¶,»á¼ÓÔØ¸ÃÄ¿Â¼ÏÂµÄËùÓĞÎÄ¼ş,»òÕß¾²Ì¬ÎÄ¼ş,²¢ÇÒ»á¶ÁÈ¡¸ÃÄ¿Â¼ÏÂWEB-INF/web.xmlÎÄ¼ş
+        System.out.println("å½“å‰é¡¹ç›®è·¯å¾„ : "+contextDir);
+        //åœ¨å¯¹åº”çš„hostä¸‹é¢åˆ›å»ºä¸€ä¸ª context å¹¶åˆ¶å®šä»–çš„å·¥ä½œè·¯å¾„,ä¼šåŠ è½½è¯¥ç›®å½•ä¸‹çš„æ‰€æœ‰æ–‡ä»¶,æˆ–è€…é™æ€æ–‡ä»¶,å¹¶ä¸”ä¼šè¯»å–è¯¥ç›®å½•ä¸‹WEB-INF/web.xmlæ–‡ä»¶
         context = (StandardContext) tomcat.addContext(host, contextPath, contextDir);
-        //¼ÓÔØ×Ô¶¨ÒåµÄ web.xmlÎÄ¼ş
+        //åŠ è½½è‡ªå®šä¹‰çš„ web.xmlæ–‡ä»¶
         loadWebxml(context);
-        //´´½¨Ò»¸öcontext ÓÃÀ´Ö¸ÏòstaticÎÄ¼ş
+        //åˆ›å»ºä¸€ä¸ªcontext ç”¨æ¥æŒ‡å‘staticæ–‡ä»¶
         creatAssetContext(host);
 
     }
 
 
     /**
-     * ¼ÓÔØxmlÎÄ¼ş
+     * åŠ è½½xmlæ–‡ä»¶
      */
     private void loadWebxml(StandardContext context){
-        //³õÊ¼»¯ContextConfigÅäÖÃ
+        //åˆå§‹åŒ–ContextConfigé…ç½®
         context.addLifecycleListener(new ContextConfig());
         if(webxmlpath!=null){
-            //¼ÓÔØÖ¸¶¨Î»ÖÃµÄweb.xml
+            //åŠ è½½æŒ‡å®šä½ç½®çš„web.xml
             context.getServletContext().setAttribute("org.apache.catalina.deploy.alt_dd",webxmlpath);
         }
     }
@@ -130,7 +153,7 @@ public class ChyTomcat {
 
 
     private void creatAssetContext(Host host){
-        //¿ªÆôÄ¬ÈÏµÄservlet ÓÃÀ´´¦Àí¾²Ì¬ÇëÇó
+        //å¼€å¯é»˜è®¤çš„servlet ç”¨æ¥å¤„ç†é™æ€è¯·æ±‚
         Wrapper defaultServlet = new StandardWrapper();
         defaultServlet.setServlet(new DefaultServlet());
         defaultServlet.setName("default");
@@ -140,7 +163,7 @@ public class ChyTomcat {
 
 
     /**
-     * Ìí¼ÓÒ»¸öservletÔÚÈİÆ÷ÖĞ
+     * æ·»åŠ ä¸€ä¸ªservletåœ¨å®¹å™¨ä¸­
      * @param servletObj
      * @param mapping
      */
@@ -156,7 +179,7 @@ public class ChyTomcat {
 
 
 
-    //¿ªÊ¼tomcat·şÎñ
+    //å¼€å§‹tomcatæœåŠ¡
     public void start(){
 
         try {
